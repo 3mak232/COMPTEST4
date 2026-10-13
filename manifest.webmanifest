@@ -1,0 +1,19 @@
+{
+  "name": "FEDO ERP",
+  "short_name": "FEDO",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F5F3EC",
+  "theme_color": "#101C2C",
+  "description": "نظام إدارة الحسابات والمبيعات والمشتريات والمخازن والموظفين",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
