@@ -231,7 +231,7 @@ async function loadPayrollAdjustments(){
 }
 function payslipRows(x,E){return [['الموظف',e(by(E,x.employee_id).name||'')],['الشهر',x.month.slice(0,7)],['الأساسي',fmt(x.basic)],['إضافي',fmt(x.overtime)],['مكافآت',fmt(x.bonus)],['سلف',fmt(x.advances)],['خصومات',fmt(x.deductions)],['غياب',fmt(x.absence_deductions)],['الصافي',fmt(x.net)],['الحالة',x.paid?'مدفوع':'غير مدفوع']]}
 function payShow(id){window._pv=id;R()}
-async function payPrint(id){const[E,L]=await Promise.all([g('employees','name'),g('payroll','month')]);const x=L.find(r=>r.id===id);if(!x)return toast('لم يتم العثور على الكشف');printHtml('كشف مرتب',`<h2>كشف مرتب</h2><table style="width:100%;border-collapse:collapse"><tbody>${payslipRows(x,E).map(r=>`<tr><th style="background:#eef4ff;text-align:right;width:30%;padding:7px;border:1px solid #eaecf0">${r[0]}</th><td style="padding:7px;border:1px solid #eaecf0">${r[1]}</td></tr>`).join('')}</tbody></table>`)}
+async function payPrint(id){const[E,L]=await Promise.all([g('employees','name'),g('payroll','month')]);const x=L.find(r=>r.id===id);if(!x)return toast('لم يتم العثور على الكشف');printHtml('كشف مرتب',`<h2>كشف مرتب</h2><table style="width:100%;border-collapse:collapse"><tbody>${payslipRows(x,E).map(r=>`<tr><th style="background:#E6F5F0;text-align:right;width:30%;padding:7px;border:1px solid #eaecf0">${r[0]}</th><td style="padding:7px;border:1px solid #eaecf0">${r[1]}</td></tr>`).join('')}</tbody></table>`)}
 async function payrollView(){const E=await g('employees','name'),L=await g('payroll','month');const pvr=window._pv?L.find(x=>x.id===window._pv):null,pvHtml=pvr?`<div class="card"><div class="card-title"><b>تفاصيل الكشف</b><div><button class="s" onclick="payPrint('${pvr.id}')">طباعة</button> <button class="s" onclick="window._pv=null;R()">إغلاق</button></div></div>${T(['البند','القيمة'],payslipRows(pvr,E))}</div>`:'';return `<h2>المرتبات</h2><div class="card np"><div class="row"><select id="pe" onchange="loadPayrollAdjustments()">${O(E)}</select><input id="pmo" type="month" onchange="loadPayrollAdjustments()"><input id="pb2" type="number" placeholder="الأساسي"><input id="po" type="number" placeholder="إضافي"><input id="pbn" type="number" placeholder="مكافأة"><input id="pa" type="number" placeholder="سلف"><input id="pd" type="number" placeholder="خصومات"><input id="pab" type="number" placeholder="غياب"><select id="pac">${O(C.accts)}</select><button class="btn soft" onclick="loadPayrollAdjustments()" title="يعيد جلب المكافآت والجزاءات والسلف المعتمدة لهذا الموظف في هذا الشهر">جلب المعتمد للشهر</button><button onclick="act(async()=>{if(!v('pmo'))throw Error('اختر الشهر');await ins('payroll',{employee_id:v('pe'),month:v('pmo')+'-01',basic:n('pb2')||+(by(E,v('pe')).salary),overtime:n('po'),bonus:n('pbn'),advances:n('pa'),deductions:n('pd'),absence_deductions:n('pab')})})">إنشاء كشف</button></div><p class="muted">اختر الموظف والشهر وستُحمَّل المكافآت والجزاءات المعتمدة تلقائيًا، ويمكن تعديل القيم قبل إنشاء الكشف. زر «جلب المعتمد للشهر» لإعادة التحميل فقط. الكشوف المنشأة تظهر في الجدول بالأسفل، ومن عمود الإجراءات: عرض، طباعة، دفع.</p></div>${pvHtml}<div class="card">${T(['الموظف','الشهر','الأساسي','الصافي','الحالة',''],L.reverse().map(x=>[e(by(E,x.employee_id).name),x.month.slice(0,7),fmt(x.basic),fmt(x.net),x.paid?'مدفوع':'غير مدفوع',`<button class="s" onclick="payShow('${x.id}')">عرض</button> <button class="s" onclick="payPrint('${x.id}')">طباعة</button> ${x.paid?'':`<button onclick="act(()=>rpc('pay_payroll',{p_payroll:'${x.id}',p_account:v('pac')}))">دفع</button>`}`]))}</div>`}
 async function retView(){const SI=await g('sales_invoices','date'),PI=await g('purchase_invoices','date'),sel=window._rk!=='p',L=sel?SI:PI;return `<h2>المرتجعات</h2><div class="card np"><select id="rk" onchange="window._rk=v('rk');RT=null;R()"><option value="s" ${sel?'selected':''}>مرتجع مبيعات</option><option value="p" ${sel?'':'selected'}>مرتجع مشتريات</option></select><select id="ri">${L.map(x=>`<option value="${x.id}">${e(x.number)} — ${fmt(x.total)}</option>`).join('')}</select><button class="s" onclick="loadRet()">عرض البنود</button>${RT?T(['المنتج','الكمية','كمية المرتجع'],RT.items.map((x,i)=>[e(by(C.products,x.product_id).name),x.qty,`<input id="rq${i}" type="number" step="0.001" value="0" style="width:90px">`]))+`<button onclick="act(async()=>{const items=${JSON.stringify(RT.items).replace(/</g,'\\u003c')}.map((x,i)=>({product_id:x.product_id,qty:n('rq'+i)})).filter(x=>x.qty>0);await rpc('${RT.s?'create_sales_return':'create_purchase_return'}',{p_invoice:'${RT.id}',p_items:items});RT=null})">حفظ المرتجع</button>`:''}</div>`}
 async function loadRet(){const s=v('rk')==='s',id=v('ri');const{data,error}=await sb.from(s?'sales_invoice_items':'purchase_invoice_items').select('product_id,qty').eq('invoice_id',id);if(error)throw error;RT={s,id,items:data||[]};R()}
@@ -892,7 +892,7 @@ async function logout(){return withLoading(async()=>{await sb.auth.signOut();me=
 const SESS_SEEN_KEY='erp_sess_seen';
 function showLockScreen(msg){
   let d=document.getElementById('lockScreen');
-  if(!d){d=document.createElement('div');d.id='lockScreen';d.style.cssText='position:fixed;inset:0;z-index:99999;background:#0f172a;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;font-size:17px;';document.body.appendChild(d)}
+  if(!d){d=document.createElement('div');d.id='lockScreen';d.style.cssText='position:fixed;inset:0;z-index:99999;background:#101C2C;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;font-size:17px;';document.body.appendChild(d)}
   d.innerHTML='<div style="font-size:44px">'+ico('lock')+'</div><div style="font-weight:700;font-size:20px">الموقع مقفول مؤقتاً</div><div style="opacity:.85;max-width:420px;line-height:1.7">'+e(msg||'')+'</div><button id="lockOut" style="margin-top:8px;padding:10px 22px;border-radius:10px;border:0;cursor:pointer;font-size:16px">تسجيل خروج</button>';
   document.getElementById('lockOut').onclick=async()=>{try{await sb.auth.signOut()}catch{}location.reload()};
 }
@@ -1460,19 +1460,19 @@ async function printInvoice(id,s){
       body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;color:#101828;margin:0;font-size:13px}
       .head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid ${pc.accent};padding-bottom:14px}
       .logo{max-height:56px;margin-bottom:6px}
-      .co b{font-size:18px}.co small{display:block;color:#475467;line-height:1.7}
-      .meta{text-align:left}.meta h1{margin:0;font-size:22px;color:${pc.accent}}.meta div{color:#475467;margin-top:4px}
+      .co b{font-size:18px}.co small{display:block;color:#3A4657;line-height:1.7}
+      .meta{text-align:left}.meta h1{margin:0;font-size:22px;color:${pc.accent}}.meta div{color:#3A4657;margin-top:4px}
       .parties{display:flex;justify-content:space-between;margin:18px 0;gap:16px}
-      .box{flex:1;background:#f8fafc;border:1px solid #e4e7ec;border-radius:10px;padding:12px}
-      .box h4{margin:0 0 6px;color:#667085;font-size:12px}
+      .box{flex:1;background:#F3F1E8;border:1px solid #e4e7ec;border-radius:10px;padding:12px}
+      .box h4{margin:0 0 6px;color:#5B6878;font-size:12px}
       table{width:100%;border-collapse:collapse;margin-top:6px}
-      th{background:#eef4ff;color:${pc.accent};padding:9px;text-align:right;font-size:12px}
+      th{background:#E6F5F0;color:${pc.accent};padding:9px;text-align:right;font-size:12px}
       td{padding:9px;border-bottom:1px solid #eaecf0}
       .totals{margin-top:14px;margin-right:auto;width:280px}
       .totals div{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #d0d5dd}
       .totals .grand{font-size:16px;font-weight:800;border-bottom:2px solid ${pc.accent};color:${pc.accent}}
-      .notes{margin-top:18px;color:#475467;white-space:pre-line}
-      .sign{display:flex;justify-content:space-between;margin-top:46px;color:#667085}
+      .notes{margin-top:18px;color:#3A4657;white-space:pre-line}
+      .sign{display:flex;justify-content:space-between;margin-top:46px;color:#5B6878}
       .sign div{border-top:1px solid #98a2b3;width:200px;text-align:center;padding-top:6px}
     .inv-stats{margin-bottom:14px}
 .inv-layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:14px;align-items:start;margin-bottom:14px}
@@ -1482,18 +1482,18 @@ async function printInvoice(id,s){
 .inv-add{grid-template-columns:minmax(180px,2fr) repeat(3,minmax(90px,1fr)) auto;align-items:end}
 .inv-add .grow{min-width:0}
 @media (max-width:900px){.inv-add{grid-template-columns:1fr 1fr}}
-.inv-add label,.inv-fields label,.inv-pay label{display:flex;flex-direction:column;gap:6px;font-size:12px;color:#667085;font-weight:700}
+.inv-add label,.inv-fields label,.inv-pay label{display:flex;flex-direction:column;gap:6px;font-size:12px;color:#5B6878;font-weight:700}
 .inv-pay{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:12px 0}
 .inv-actions{display:flex;justify-content:flex-start;margin-top:12px}
 .inv-empty{padding:12px 0}
 .inv-summary{position:sticky;top:80px}
 .inv-line{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f2f5}
-.inv-line span{color:#667085}
+.inv-line span{color:#5B6878}
 .inv-note{font-size:12px;margin-top:12px}
 .inv-search{max-width:260px}
 .table-wrap{overflow-x:auto}
 .inv-table{width:100%;border-collapse:collapse}
-.inv-table th{background:#f8fafc;color:#667085;font-size:12px;text-align:right;padding:10px}
+.inv-table th{background:#F3F1E8;color:#5B6878;font-size:12px;text-align:right;padding:10px}
 </style></head><body>
       <div class="head">
         <div class="co">${logo}${pc.showName?`<b>${e(co.company_name||'')}</b>`:''}<small>${e(co.address||'')}${co.phone?'<br>هاتف: '+e(co.phone):''}${co.tax_number?'<br>الرقم الضريبي: '+e(co.tax_number):''}</small></div>
@@ -1547,7 +1547,7 @@ function printHtml(title,body){
   const w=window.open('','_blank');
   if(!w){toast('اسمح بالنوافذ المنبثقة عشان تطبع');return null}
   w.document.open();
-  w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${e(title)}</title><style>@page{size:A4;margin:12mm}body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;color:#101828;margin:0;font-size:13px}h2{margin:0 0 8px;color:#1d4ed8}h3{margin:14px 0 6px}.muted{color:#667085}table{width:100%;border-collapse:collapse;margin:8px 0}th{background:#eef4ff;color:#1d4ed8;padding:7px;text-align:right;font-size:12px}td{padding:7px;border-bottom:1px solid #eaecf0;text-align:right}.tot{font-weight:800;border-top:2px solid #1d4ed8;padding-top:6px}.bad{color:#b42318}.good{color:#067647}.chip{display:inline-block;padding:2px 8px;border-radius:99px;border:1px solid #98a2b3}</style></head><body>${body}<script>window.onload=function(){setTimeout(function(){window.print()},200)}<\/script></body></html>`);
+  w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${e(title)}</title><style>@page{size:A4;margin:12mm}body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;color:#101828;margin:0;font-size:13px}h2{margin:0 0 8px;color:#095F4A}h3{margin:14px 0 6px}.muted{color:#5B6878}table{width:100%;border-collapse:collapse;margin:8px 0}th{background:#E6F5F0;color:#095F4A;padding:7px;text-align:right;font-size:12px}td{padding:7px;border-bottom:1px solid #eaecf0;text-align:right}.tot{font-weight:800;border-top:2px solid #095F4A;padding-top:6px}.bad{color:#b42318}.good{color:#067647}.chip{display:inline-block;padding:2px 8px;border-radius:99px;border:1px solid #98a2b3}</style></head><body>${body}<script>window.onload=function(){setTimeout(function(){window.print()},200)}<\/script></body></html>`);
   w.document.close();
   return w;
 }
@@ -1758,7 +1758,7 @@ async function retPrint(id,s){
   let tot=0;
   const rowsHtml=its.map((x,i)=>{const pr=Number(x.unit_price??x.price??0),q=Number(x.qty||0),lt=Number(x.line_total??q*pr);tot+=lt;return `<tr><td>${i+1}</td><td>${e(x.products?.name||'')}</td><td>${fmt(q)}</td><td>${fmt(pr)}</td><td>${fmt(lt)}</td></tr>`}).join('');
   const title=s?'مرتجع مبيعات':'مرتجع مشتريات';
-  printHtml(title+' '+(h.number||''),`<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1d4ed8;padding-bottom:12px"><div><b style="font-size:17px">${e(co.company_name||'')}</b><div class="muted">${e(co.address||'')}${co.tax_number?'<br>الرقم الضريبي: '+e(co.tax_number):''}</div></div><div style="text-align:left"><h2>${title}</h2><div>رقم: <b>${e(h.number||'')}</b></div><div>التاريخ: ${e(h.date||'')}</div>${inv.number?`<div>من الفاتورة: ${e(inv.number)}</div>`:''}</div></div>
+  printHtml(title+' '+(h.number||''),`<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #095F4A;padding-bottom:12px"><div><b style="font-size:17px">${e(co.company_name||'')}</b><div class="muted">${e(co.address||'')}${co.tax_number?'<br>الرقم الضريبي: '+e(co.tax_number):''}</div></div><div style="text-align:left"><h2>${title}</h2><div>رقم: <b>${e(h.number||'')}</b></div><div>التاريخ: ${e(h.date||'')}</div>${inv.number?`<div>من الفاتورة: ${e(inv.number)}</div>`:''}</div></div>
   <p><b>${s?'العميل':'المورد'}:</b> ${e(party)}</p>
   <table><thead><tr><th>#</th><th>الصنف</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead><tbody>${rowsHtml}</tbody></table>
   <p class="tot" style="text-align:left">الإجمالي: ${fmt(h.total??tot)}</p>
@@ -2270,7 +2270,7 @@ async function refreshCo(){
   try{const r=await g('company_settings');window._co=r[0]||{};window._coLogo=window._co.logo_url||'';window._coName=window._co.company_name||''}catch(_){}
 }
 // إعدادات الطباعة (التخصيص الجاي هيكون من الإعدادات): إظهار اللوجو والاسم والعنوان، حجم اللوجو، لون الخط الفاصل
-const PRINT_CFG={showLogo:true,showName:true,showAddress:true,logoMaxH:60,accent:'#1d4ed8'};
+const PRINT_CFG={showLogo:true,showName:true,showAddress:true,logoMaxH:60,accent:'#095F4A'};
 // هيدر الطباعة الموحد: اللوجو + اسم الشركة + العنوان والرقم الضريبي
 function brandHtml(){
   const c=window._co||{},cfg=printCfg();
@@ -2278,13 +2278,13 @@ function brandHtml(){
   const name=cfg.showName&&c.company_name?`<b style="font-size:17px;color:#101828">${e(c.company_name)}</b>`:'';
   const addr=cfg.showAddress?[c.address?e(c.address):'',c.tax_number?'الرقم الضريبي: '+e(c.tax_number):''].filter(Boolean).join(' · '):'';
   if(!logo&&!name)return '';
-  return `<div class="print-brand" style="display:flex;align-items:center;gap:12px;border-bottom:2px solid ${cfg.accent};padding-bottom:10px;margin-bottom:14px">${logo}<div>${name}${addr?`<div style="color:#667085;font-size:12px;margin-top:2px">${addr}</div>`:''}</div></div>`;
+  return `<div class="print-brand" style="display:flex;align-items:center;gap:12px;border-bottom:2px solid ${cfg.accent};padding-bottom:10px;margin-bottom:14px">${logo}<div>${name}${addr?`<div style="color:#5B6878;font-size:12px;margin-top:2px">${addr}</div>`:''}</div></div>`;
 }
 // كل الطباعة بتاخد الهيدر تلقائياً (opts.brand=false لو التصميم فيه هيدره الخاص)
 const _printHtml0=printHtml;
 printHtml=function(title,body,opts){
   const head=(opts&&opts.brand===false)?'':brandHtml();
-  const foot=(opts&&opts.brand===false)||!printCfg().footer?'':`<div style="margin-top:18px;padding-top:8px;border-top:1px solid #eaecf0;color:#667085;font-size:11px;text-align:center">${e(printCfg().footer)}</div>`;
+  const foot=(opts&&opts.brand===false)||!printCfg().footer?'':`<div style="margin-top:18px;padding-top:8px;border-top:1px solid #eaecf0;color:#5B6878;font-size:11px;text-align:center">${e(printCfg().footer)}</div>`;
   return _printHtml0(title,head+body+foot);
 };
 const _boot0=boot;
@@ -3595,7 +3595,7 @@ async function attSave(){
 }
 
 // ---- تخصيص الطباعة (الأدمن والمطور من الويب) ----
-const PRINT_DEFAULTS={showLogo:true,showName:true,showAddress:true,logoMaxH:60,accent:'#1d4ed8',footer:''};
+const PRINT_DEFAULTS={showLogo:true,showName:true,showAddress:true,logoMaxH:60,accent:'#095F4A',footer:''};
 function printCfg(){const s=(window._co&&window._co.print_settings)||{};return Object.assign({},PRINT_DEFAULTS,s)}
 function printCardHtml(){
   if(!me||me.role!=='admin')return '';
@@ -3613,7 +3613,7 @@ function printCardHtml(){
 }
 async function savePrintCfg(){
   const cfg={showLogo:$('#pc_logo').checked,showName:$('#pc_name').checked,showAddress:$('#pc_addr').checked,
-    logoMaxH:Math.max(20,Math.min(160,parseInt(v('pc_h'))||60)),accent:v('pc_acc')||'#1d4ed8',footer:v('pc_foot')||''};
+    logoMaxH:Math.max(20,Math.min(160,parseInt(v('pc_h'))||60)),accent:v('pc_acc')||'#095F4A',footer:v('pc_foot')||''};
   await act(async()=>{await upd('company_settings',1,{print_settings:cfg});await refreshCo()});
 }
 
