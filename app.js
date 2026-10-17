@@ -854,7 +854,7 @@ async function paintView(q){
   const shellKey=me.id+'|'+me.role+'|'+(me.isDev?'d':'');
   const viewChanged=window._animView!==view;window._animView=view;
   if(window._shellKey===shellKey&&$('.sidebar')&&$('.page')&&$('.mobile-bottom')){const pg=$('.page');if(window._lastLinks!==links){$('nav').innerHTML=links;window._lastLinks=links}pg.innerHTML=h;if(viewChanged){pg.classList.remove('pg-in');void pg.offsetWidth;pg.classList.add('pg-in')}$('.mobile-bottom').innerHTML=bottomNav()}
-  else{window._shellKey=shellKey;$('#app').innerHTML=`<div class="mobile-overlay" onclick="closeMobileNav()"></div><aside class="sidebar"><div class="brandbox"><div class="brandmark"><img src="./brand/fedo-symbol-dark.svg" alt=""></div><div><b>FEDO ERP</b><small>Finance · Inventory · Operations</small></div></div><div class="userbox"><div class="avatar">${e((me.name||'U').slice(0,1))}</div><div><b>${e(me.name)}</b><small>${e(me.isDev?'مطور':me.role)}</small></div></div><nav>${links}</nav><div class="side-bottom"><button class="sidebtn danger-link" onclick="closeMobileNav();logout()">تسجيل الخروج</button></div></aside><main class="shell"><header class="topbar"><button class="mobile-menu-btn" onclick="openMobileNav()" aria-label="فتح القائمة">${ico('menu')}</button><div class="top-search" style="position:relative"><span class="ico-s">${ico('search')}</span><input id="gs" autocomplete="off" placeholder="بحث سريع في النظام" oninput="gsSearch(this.value)" onkeydown="gsKey(event)"/><div id="gsRes" hidden style="position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--card,#fff);color:var(--fg,#101C2C);border:1px solid rgba(16,28,44,.25);border-radius:12px;box-shadow:0 12px 32px rgba(16,28,44,.18);z-index:999;max-height:60vh;overflow:auto;padding:6px;text-align:start"></div></div><div class="top-actions"><div id="netStatus"></div>${langSeg()}${fedoThemeBtn("iconbtn theme-btn")}<span class="ver-pill" title="رقم الإصدار">${APP_VERSION}</span>${me.isDev?'<button class="iconbtn" title="فحص الجاهزية" onclick="go(\'health\')">'+ico('check')+'</button>':''}<button class="role-pill">${e(me.role)}</button></div></header><div class="page${viewChanged?' pg-in':''}">${h}</div><div class="mobile-bottom">${bottomNav()}</div></main>`;}
+  else{window._shellKey=shellKey;$('#app').innerHTML=`<div class="mobile-overlay" onclick="closeMobileNav()"></div><aside class="sidebar"><div class="brandbox"><div class="brandmark"><img src="./brand/fedo-symbol-dark.svg" alt=""></div><div><b>FEDO ERP</b><small>Finance · Inventory · Operations</small></div><small class="powered">${POWERED_BY_TEXT}</small></div><div class="userbox"><div class="avatar">${e((me.name||'U').slice(0,1))}</div><div><b>${e(me.name)}</b><small>${e(me.isDev?'مطور':me.role)}</small></div></div><nav>${links}</nav><div class="side-bottom"><button class="sidebtn danger-link" onclick="closeMobileNav();logout()">تسجيل الخروج</button></div></aside><main class="shell"><header class="topbar"><button class="mobile-menu-btn" onclick="openMobileNav()" aria-label="فتح القائمة">${ico('menu')}</button><div class="top-search" style="position:relative"><span class="ico-s">${ico('search')}</span><input id="gs" autocomplete="off" placeholder="بحث سريع في النظام" oninput="gsSearch(this.value)" onkeydown="gsKey(event)"/><div id="gsRes" hidden style="position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--card,#fff);color:var(--fg,#101C2C);border:1px solid rgba(16,28,44,.25);border-radius:12px;box-shadow:0 12px 32px rgba(16,28,44,.18);z-index:999;max-height:60vh;overflow:auto;padding:6px;text-align:start"></div></div><div class="top-actions"><div id="netStatus"></div>${langSeg()}${fedoThemeBtn("iconbtn theme-btn")}<span class="ver-pill" title="رقم الإصدار">${APP_VERSION}</span>${me.isDev?'<button class="iconbtn" title="فحص الجاهزية" onclick="go(\'health\')">'+ico('check')+'</button>':''}<button class="role-pill">${e(me.role)}</button></div></header><div class="page${viewChanged?' pg-in':''}">${h}</div><div class="mobile-bottom">${bottomNav()}</div></main>`;}
   if(q){const i=$('#q');if(i){i.focus();i.setSelectionRange(99,99)}}
   updateOnlineStatus();
 }
@@ -879,7 +879,7 @@ function bottomNav(){return NAV.filter(x=>can(x[0])).filter(x=>['dash','sales','
 let _qTimer=null;
 function qSearch(el){window._q=el.value;clearTimeout(_qTimer);_qTimer=setTimeout(()=>{R(1).then(()=>{const q=document.getElementById('q');if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}})},250)}
 function readCachedC(){const r=k=>{try{return JSON.parse(localStorage.getItem('erp_cache_'+k)||'null')}catch{return null}};const products=r('products'),customers=r('customers'),suppliers=r('suppliers'),warehouses=r('warehouses'),stock=r('stock'),cb=r('cb'),sbal=r('sbal');if(!products||!customers||!suppliers||!warehouses||!stock||!cb||!sbal)return null;return{products,customers,suppliers,warehouses,accts:r('cash_accounts')||[],stock,cb,sbal}}
-function lgShell(inner){return `<div class="lg-page"><div class="lg-wrap"><aside class="lg-brand"><div class="lg-bg"></div><div class="lg-brand-top"><div class="brandmark"><img src="./brand/fedo-symbol-dark.svg" alt=""></div><div><b>FEDO ERP</b><small>منظومة إدارة الأعمال</small></div></div><div class="lg-brand-mid"><h1>كل أعمال شركتك في مكان واحد</h1><p>مبيعات ومشتريات ومخزون ومحاسبة وموارد بشرية، بصلاحيات دقيقة وتحقق ثنائي للإدارة.</p><ul class="lg-feats"><li><span>${ico('receipt')}</span>فواتير مبيعات ومشتريات بترقيم مستقل</li><li><span>${ico('box')}</span>مخزون متعدد المخازن مع تتبع وتنبيهات</li><li><span>${ico('chart')}</span>تقارير مالية وميزان مراجعة لحظي</li><li><span>${ico('shield')}</span>حماية بالتحقق الثنائي والجهاز الموثوق</li></ul></div><div class="lg-brand-foot">الإصدار ${APP_VERSION}</div></aside><section class="lg-card">${fedoThemeBtn("theme-btn lg-theme")}${inner}</section></div></div>`}
+function lgShell(inner){return `<div class="lg-page"><div class="lg-wrap"><aside class="lg-brand"><div class="lg-bg"></div><div class="lg-brand-top"><div class="lg-wordmark-wrap"><img class="lg-wordmark" src="./brand/fedo-logo-dark.svg" alt="FEDO ERP"><small class="powered">${POWERED_BY_TEXT}</small></div></div><div class="lg-brand-mid"><h1>كل أعمال شركتك في مكان واحد</h1><p>مبيعات ومشتريات ومخزون ومحاسبة وموارد بشرية، بصلاحيات دقيقة وتحقق ثنائي للإدارة.</p><ul class="lg-feats"><li><span>${ico('receipt')}</span>فواتير مبيعات ومشتريات بترقيم مستقل</li><li><span>${ico('box')}</span>مخزون متعدد المخازن مع تتبع وتنبيهات</li><li><span>${ico('chart')}</span>تقارير مالية وميزان مراجعة لحظي</li><li><span>${ico('shield')}</span>حماية بالتحقق الثنائي والجهاز الموثوق</li></ul></div><div class="lg-brand-foot">الإصدار ${APP_VERSION}</div></aside><section class="lg-card">${fedoThemeBtn("theme-btn lg-theme")}${inner}</section></div></div>`}
 function _loginScreen(){$('#app').innerHTML=lgShell(`<div class="lg-head"><span class="lg-eyebrow">مرحبًا بيك</span><h2>تسجيل الدخول</h2><p>ادخل ببريدك الإلكتروني أو اسم المستخدم أو رقم الموبايل.</p></div><div class="lg-field"><label for="lu">الإيميل أو اسم المستخدم أو الموبايل</label><div class="lg-in"><span>@</span><input id="lu" type="text" autocomplete="username" placeholder="name@company.com"></div></div><div class="lg-field"><label for="lp">كلمة المرور</label><div class="lg-in"><span>${ico('lock')}</span><input id="lp" type="password" autocomplete="current-password" placeholder="••••••••"><button type="button" class="lg-eye" onclick="lgTogglePw()" aria-label="إظهار أو إخفاء كلمة المرور">إظهار</button></div></div><button class="lg-submit" onclick="login()">تسجيل الدخول</button><p class="lg-note">${ico('lockkey')} الاتصال مشفّر. الحساب الأول في المشروع الجديد يُنشأ كمدير حسب إعدادات قاعدة البيانات.</p>`)}
 function _inactiveScreen(){$('#app').innerHTML=lgShell(`<div class="lg-head"><span class="lg-eyebrow">خطوة واحدة متبقية</span><h2>الحساب بانتظار التفعيل</h2><p>سيتطلب الحساب تفعيل المدير قبل استخدام النظام.</p></div><button class="lg-submit" onclick="logout()">خروج</button>`)}
 function lgTogglePw(){const i=document.getElementById('lp');if(!i)return;const show=i.type==='password';i.type=show?'text':'password';const b=document.querySelector('.lg-eye');if(b)b.textContent=show?'إخفاء':'إظهار'}
@@ -1457,9 +1457,9 @@ async function printInvoice(id,s){
     const pc=printCfg();
     const logo=pc.showLogo&&co.logo_url?`<img src="${e(co.logo_url)}" alt="" class="logo" style="max-height:${pc.logoMaxH}px">`:'';
     const html=`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${e(hdr.number)}</title><style>
-      @page{size:A4;margin:14mm}
-      body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;color:#101C2C;margin:0;font-size:13px}
-      .head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid ${pc.accent};padding-bottom:14px}
+      @page{size:${pc.paperSize};margin:${pc.marginMm}mm}
+      body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;color:#101C2C;margin:0;font-size:${pc.fontPx}px}
+      .head{display:flex;justify-content:${pcJustify(pc)};align-items:flex-start;border-bottom:3px solid ${pc.accent};padding-bottom:14px}
       .logo{max-height:56px;margin-bottom:6px}
       .co b{font-size:18px}.co small{display:block;color:#3A4657;line-height:1.7}
       .meta{text-align:left}.meta h1{margin:0;font-size:22px;color:${pc.accent}}.meta div{color:#3A4657;margin-top:4px}
@@ -1510,8 +1510,8 @@ async function printInvoice(id,s){
         <div><span>المدفوع</span><b>${fmt(bal.allocated_paid)}</b></div>
         <div><span>المتبقي</span><b>${fmt(bal.outstanding)}</b></div>
       </div>
-      ${hdr.notes?'<div class="notes"><b>ملاحظات:</b>\n'+e(hdr.notes)+'</div>':''}
-      <div class="sign"><div>توقيع المستلم</div><div>توقيع المسؤول</div></div>
+      ${pc.showNotes&&hdr.notes?'<div class="notes"><b>ملاحظات:</b>\n'+e(hdr.notes)+'</div>':''}
+      ${pc.showSignatures?'<div class="sign"><div>توقيع المستلم</div><div>توقيع المسؤول</div></div>':''}
       ${vendorCreditHtml()}
     <script>window.onload=function(){setTimeout(function(){window.print()},200)}<\/script></body></html>`;
     w.document.open(); w.document.write(html); w.document.close();
@@ -2315,7 +2315,7 @@ function brandHtml(){
   const name=cfg.showName&&c.company_name?`<b style="font-size:17px;color:#101C2C">${e(c.company_name)}</b>`:'';
   const addr=cfg.showAddress?[c.address?e(c.address):'',c.tax_number?'الرقم الضريبي: '+e(c.tax_number):''].filter(Boolean).join(' · '):'';
   if(!logo&&!name)return '';
-  return `<div class="print-brand" style="display:flex;align-items:center;gap:12px;border-bottom:2px solid ${cfg.accent};padding-bottom:10px;margin-bottom:14px">${logo}<div>${name}${addr?`<div style="color:#5B6878;font-size:12px;margin-top:2px">${addr}</div>`:''}</div></div>`;
+  return `<div class="print-brand" style="display:flex;justify-content:${pcJustify(cfg)};align-items:center;gap:12px;border-bottom:2px solid ${cfg.accent};padding-bottom:10px;margin-bottom:14px">${logo}<div>${name}${addr?`<div style="color:#5B6878;font-size:12px;margin-top:2px">${addr}</div>`:''}</div></div>`;
 }
 // كل الطباعة بتاخد الهيدر تلقائياً (opts.brand=false لو التصميم فيه هيدره الخاص)
 const _printHtml0=printHtml;
@@ -3640,11 +3640,13 @@ async function attSave(){
 }
 
 // ---- تخصيص الطباعة (الأدمن والمطور من الويب) ----
-const PRINT_DEFAULTS={showLogo:true,showName:true,showAddress:true,logoMaxH:60,accent:'#095F4A',footer:'',vendorName:'FEDO ERP',vendorUrl:'',vendorLogo:true};
+const PRINT_DEFAULTS={showLogo:true,showName:true,showAddress:true,logoMaxH:60,accent:'#095F4A',footer:'',vendorName:'FEDO ERP',vendorUrl:'',vendorLogo:true,paperSize:'A4',marginMm:14,fontPx:13,headerAlign:'start',showSignatures:true,showNotes:true};
+const POWERED_BY_TEXT='Powered by FEDO ERP';
+function pcJustify(c){return c.headerAlign==='center'?'center':(c.headerAlign==='end'?'flex-start':'space-between')}
 // رصيد مزوّد النظام أسفل الطباعة (اسم + موقع + لوجو النظام)، قابل للتخصيص من تخصيص الطباعة
 function vendorCreditHtml(){const c=printCfg();if(!c.vendorName&&!c.vendorUrl&&!c.vendorLogo)return '';
   const logo=c.vendorLogo?`<img src="${e(new URL('brand/fedo-logo-light.svg',location.href).href)}" alt="" style="height:16px;vertical-align:middle;margin-inline-end:6px">`:'';
-  const name=c.vendorName?`<b>${e(c.vendorName)}</b>`:'';
+  const name=c.vendorName?`Powered by <b>${e(c.vendorName)}</b>`:'';
   const url=c.vendorUrl?`${name?' · ':''}<span dir="ltr">${e(c.vendorUrl)}</span>`:'';
   return `<div class="vendor-credit" style="margin-top:14px;padding-top:8px;border-top:1px solid #E3E0D4;color:#5B6878;font-size:11px;text-align:center">${logo}${name}${url}</div>`}
 function printCfg(){const s=(window._co&&window._co.print_settings)||{};return Object.assign({},PRINT_DEFAULTS,s)}
@@ -3652,22 +3654,37 @@ function printCardHtml(){
   if(!me||me.role!=='admin')return '';
   const c=printCfg();
   const chk=(id,on,lbl)=>`<label class="co-switch"><input type="checkbox" id="${id}" ${on?'checked':''}><span><b>${lbl}</b></span></label>`;
+  const sel=(id,opts,cur)=>`<select id="${id}">${opts.map(([v,l])=>`<option value="${v}" ${String(cur)===v?'selected':''}>${l}</option>`).join('')}</select>`;
   return `<div class="card co-card"><div class="co-sec"><h4>تخصيص الطباعة</h4>
-    <p class="muted" style="margin:0 0 10px">الإعدادات دي بتتطبق على كل تصاميم الطباعة: الكشوف والمرتبات والتحويلات والفواتير.</p>
-    <div class="co-switches">${chk('pc_logo',c.showLogo,'إظهار اللوجو')}${chk('pc_name',c.showName,'إظهار اسم الشركة')}${chk('pc_addr',c.showAddress,'إظهار العنوان والرقم الضريبي')}</div>
+    <p class="muted" style="margin:0 0 12px">الإعدادات دي بتتطبق على كل تصاميم الطباعة: الكشوف والمرتبات والتحويلات والفواتير.</p>
+    <h5 class="pc-h">1) الهيدر والهوية</h5>
+    <div class="co-switches">${chk('pc_logo',c.showLogo,'إظهار لوجو الشركة')}${chk('pc_name',c.showName,'إظهار اسم الشركة')}${chk('pc_addr',c.showAddress,'إظهار العنوان والرقم الضريبي')}</div>
     <div class="fm-grid">
       <label class="fm-f"><span>حجم اللوجو (بكسل)</span><input id="pc_h" type="number" min="20" max="160" value="${e(c.logoMaxH)}"></label>
-      <label class="fm-f"><span>لون الخط الفاصل</span><input id="pc_acc" type="color" value="${e(c.accent)}" style="min-height:42px;padding:4px"></label>
+      <label class="fm-f"><span>محاذاة الهيدر</span>${sel('pc_align',[['start','يمين (بداية)'],['center','وسط'],['end','يسار (نهاية)']],c.headerAlign)}</label>
+      <label class="fm-f"><span>لون الخط الفاصل والعناوين</span><input id="pc_acc" type="color" value="${e(c.accent)}" style="min-height:42px;padding:4px"></label>
+    </div>
+    <h5 class="pc-h">2) الصفحة والخط</h5>
+    <div class="fm-grid">
+      <label class="fm-f"><span>حجم الورقة</span>${sel('pc_paper',[['A4','A4'],['A5','A5'],['Letter','Letter']],c.paperSize)}</label>
+      <label class="fm-f"><span>الهوامش (ملم)</span><input id="pc_margin" type="number" min="5" max="30" value="${e(c.marginMm)}"></label>
+      <label class="fm-f"><span>حجم الخط</span>${sel('pc_font',[['11','صغير (11)'],['13','عادي (13)'],['15','كبير (15)']],c.fontPx)}</label>
+    </div>
+    <h5 class="pc-h">3) المحتوى والتذييل</h5>
+    <div class="co-switches">${chk('pc_notes',c.showNotes,'إظهار الملاحظات')}${chk('pc_sign',c.showSignatures,'إظهار خانات التوقيع')}${chk('pc_vlogo',c.vendorLogo,'إظهار لوجو النظام أسفل الطباعة')}</div>
+    <div class="fm-grid">
       <label class="fm-f"><span>نص أسفل الطباعة</span><input id="pc_foot" value="${e(c.footer)}" placeholder="مثلاً: شكراً لتعاملكم معنا"></label>
-      <label class="fm-f"><span>اسم النظام/صاحب الحساب (أسفل الطباعة)</span><input id="pc_vname" value="${e(c.vendorName)}" placeholder="مثلاً: FEDO ERP أو اسمك"></label>
+      <label class="fm-f"><span>اسم صاحب النظام (Powered by)</span><input id="pc_vname" value="${e(c.vendorName)}" placeholder="مثلاً: FEDO ERP أو اسمك"></label>
       <label class="fm-f"><span>موقع أو رابط (اختياري)</span><input id="pc_vurl" value="${e(c.vendorUrl)}" placeholder="example.com" dir="ltr"></label>
     </div>
-    <div class="co-switches">${chk('pc_vlogo',c.vendorLogo,'إظهار لوجو النظام أسفل الطباعة')}</div>
     <div class="co-foot"><small class="muted">التغيير بيظهر في أي طباعة جديدة.</small><button onclick="savePrintCfg()">حفظ تخصيص الطباعة</button></div></div></div>`;
 }
 async function savePrintCfg(){
   const cfg={showLogo:$('#pc_logo').checked,showName:$('#pc_name').checked,showAddress:$('#pc_addr').checked,
-    logoMaxH:Math.max(20,Math.min(160,parseInt(v('pc_h'))||60)),accent:v('pc_acc')||'#095F4A',footer:v('pc_foot')||'',vendorName:v('pc_vname')||'',vendorUrl:v('pc_vurl')||'',vendorLogo:$('#pc_vlogo').checked};
+    logoMaxH:Math.max(20,Math.min(160,parseInt(v('pc_h'))||60)),accent:v('pc_acc')||'#095F4A',footer:v('pc_foot')||'',
+    vendorName:v('pc_vname')||'',vendorUrl:v('pc_vurl')||'',vendorLogo:$('#pc_vlogo').checked,
+    paperSize:v('pc_paper')||'A4',marginMm:Math.max(5,Math.min(30,parseInt(v('pc_margin'))||14)),fontPx:parseInt(v('pc_font'))||13,
+    headerAlign:v('pc_align')||'start',showSignatures:$('#pc_sign').checked,showNotes:$('#pc_notes').checked};
   await act(async()=>{await upd('company_settings',1,{print_settings:cfg});await refreshCo()});
 }
 

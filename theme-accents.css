@@ -384,3 +384,15 @@ nav a.on::before{background:#18B58B;box-shadow:0 0 12px rgba(24,181,139,.7)}
 .lg-in>span{color:var(--muted)}
 .lg-field label{color:var(--ink-2)}
 .lg-in input{border:0!important;box-shadow:none!important;outline:0}
+
+/* Powered-by line under every logo */
+.brandbox{flex-wrap:wrap}
+.brandbox .powered{flex-basis:100%;margin-top:6px;padding-inline-start:56px;color:var(--side-muted);font-size:11px;font-weight:600;letter-spacing:.02em}
+.lg-wordmark-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.lg-wordmark{height:54px;width:auto;display:block}
+.lg-wordmark-wrap .powered{color:var(--side-muted);font-size:12px;font-weight:600;letter-spacing:.02em}
+/* print settings section headings */
+.pc-h{margin:14px 0 8px;font-size:13px;font-weight:800;color:var(--ink-2)}
+.brandbox{align-items:center}
+.brandbox>.brandmark{flex:0 0 auto}
+.brandbox>div:not(.brandmark):not(.powered){flex:1 1 0;min-width:0}
