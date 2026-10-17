@@ -3640,8 +3640,8 @@ async function attSave(){
 }
 
 // ---- تخصيص الطباعة (الأدمن والمطور من الويب) ----
-const PRINT_DEFAULTS={showLogo:true,showName:true,showAddress:true,logoMaxH:60,accent:'#095F4A',footer:'',vendorName:'FEDO ERP',vendorUrl:'',vendorLogo:true,paperSize:'A4',marginMm:14,fontPx:13,headerAlign:'start',showSignatures:true,showNotes:true};
-const POWERED_BY_TEXT='Powered by FEDO ERP';
+const PRINT_DEFAULTS={showLogo:true,showName:true,showAddress:true,logoMaxH:60,accent:'#095F4A',footer:'',vendorName:'GHONIMX Technologies',vendorUrl:'',vendorLogo:true,paperSize:'A4',marginMm:14,fontPx:13,headerAlign:'start',showSignatures:true,showNotes:true};
+const POWERED_BY_TEXT='Powered by GHONIMX Technologies';
 function pcJustify(c){return c.headerAlign==='center'?'center':(c.headerAlign==='end'?'flex-start':'space-between')}
 // رصيد مزوّد النظام أسفل الطباعة (اسم + موقع + لوجو النظام)، قابل للتخصيص من تخصيص الطباعة
 function vendorCreditHtml(){const c=printCfg();if(!c.vendorName&&!c.vendorUrl&&!c.vendorLogo)return '';
@@ -3674,7 +3674,7 @@ function printCardHtml(){
     <div class="co-switches">${chk('pc_notes',c.showNotes,'إظهار الملاحظات')}${chk('pc_sign',c.showSignatures,'إظهار خانات التوقيع')}${chk('pc_vlogo',c.vendorLogo,'إظهار لوجو النظام أسفل الطباعة')}</div>
     <div class="fm-grid">
       <label class="fm-f"><span>نص أسفل الطباعة</span><input id="pc_foot" value="${e(c.footer)}" placeholder="مثلاً: شكراً لتعاملكم معنا"></label>
-      <label class="fm-f"><span>اسم صاحب النظام (Powered by)</span><input id="pc_vname" value="${e(c.vendorName)}" placeholder="مثلاً: FEDO ERP أو اسمك"></label>
+      <label class="fm-f"><span>اسم صاحب النظام (Powered by)</span><input id="pc_vname" value="${e(c.vendorName)}" placeholder="مثلاً: GHONIMX Technologies أو اسمك"></label>
       <label class="fm-f"><span>موقع أو رابط (اختياري)</span><input id="pc_vurl" value="${e(c.vendorUrl)}" placeholder="example.com" dir="ltr"></label>
     </div>
     <div class="co-foot"><small class="muted">التغيير بيظهر في أي طباعة جديدة.</small><button onclick="savePrintCfg()">حفظ تخصيص الطباعة</button></div></div></div>`;
