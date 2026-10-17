@@ -8,7 +8,9 @@ const ICO_P={check:'<path d="M20 6 9 17l-5-5"/>',x:'<path d="M18 6 6 18M6 6l12 1
 const ICO_P2={up:'<path d="M7 17 17 7M9 7h8v8"/>',down:'<path d="M17 7 7 17M15 17H7V9"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',box2:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 12h16"/>',grid:'<rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/>',pulse:'<path d="M3 12h4l2-6 4 12 2-6h6"/>',swaplr:'<path d="M4 8h16M16 4l4 4-4 4M20 16H4M8 12l-4 4 4 4"/>',chevr:'<path d="M9 6l6 6-6 6"/>',chevd:'<path d="M6 9l6 6 6-6"/>',back:'<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>',search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',swap:'<path d="M4 8h14l-3-3M20 16H6l3 3"/>'};
 function ico(n){return `<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICO_P[n]||ICO_P2[n]||''}</svg>`}
 const $=s=>document.querySelector(s),v=id=>{const x=$('#'+id);return x?x.value:''},n=id=>+v(id)||0,e=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const fmt=x=>(+x||0).toLocaleString('ar-EG',{maximumFractionDigits:2});
+// الأرقام والتواريخ: عامية = أرقام عربية، فصحى/English = أرقام إنجليزية
+function locOf(){const m=dialectMode();return m==='eg'?'ar-EG':(m==='msa'?'ar-EG-u-nu-latn':'en-US')}
+const fmt=x=>(+x||0).toLocaleString(locOf(),{maximumFractionDigits:2});
 let _loading=false,_loaderTimer=null,_loadingLabel='';
 function showLoader(title='جاري التحميل...',text='من فضلك انتظر'){
   const box=$('#globalLoader');
@@ -115,7 +117,7 @@ async function trOpen(kind,id){const t=kind==='stk'?'stock_transfers':'cash_tran
 function trDetHtml(k){const d=window._trDet;if(!d||d.kind!==k)return '';const r=d.row;const wn=id=>(by(C.warehouses,id).name)||'';const an=id=>(by(C.accts,id).name)||'';let info;if(k==='stk'){info=[['رقم التحويل',r.number],['التاريخ',r.date],['من مخزن',wn(r.from_warehouse)],['إلى مخزن',wn(r.to_warehouse)],['الحالة',r.status||'—'],['ملاحظات',r.notes||'—'],['تم بواسطة',d.by]]}else{info=[['التاريخ',r.date],['من حساب',an(r.from_account)],['إلى حساب',an(r.to_account)],['المبلغ',fmt(r.amount)],['تم بواسطة',d.by]]}const itemsT=k==='stk'?`<h3>الأصناف المحوّلة</h3>${T(['الصنف','الكمية'],d.items.map(x=>[e((by(C.products,x.product_id).name)||'—'),x.qty]))}`:'';return `<div class="card tr-detail"><div class="card-title"><b>تفاصيل ${k==='stk'?'التحويل المخزني':'التحويل بين الحسابات'}</b><button class="s" onclick="closeModal()">إغلاق</button></div>${T(['البند','القيمة'],info.map(([a,b])=>[a,e(String(b))]))}${itemsT}</div>`}
 async function stkTransfersHtml(){const L=(await g('stock_transfers','date')).reverse();const wn=id=>(by(C.warehouses,id).name)||'';const rows=L.map(x=>[e(x.number),x.date,e(wn(x.from_warehouse)),e(wn(x.to_warehouse)),x.status,trOpenBtn('stk',x.id)]);const texts=L.map(x=>[e(x.number),x.date,wn(x.from_warehouse),wn(x.to_warehouse),x.status].join(' '));return lsCard('stk_tr',['رقم','التاريخ','من','إلى','الحالة',''],rows,texts,'ابحث برقم التحويل أو اسم المخزن أو التاريخ...')}
 async function cashTransfersHtml(){const[L0,PN]=await Promise.all([g('cash_transfers','date'),profNames()]);const L=L0.slice().reverse();const an=id=>(by(C.accts,id).name)||'';const rows=L.map(x=>[x.date,e(an(x.from_account)),e(an(x.to_account)),fmt(x.amount),e(PN[x.created_by]||'—'),trOpenBtn('cash',x.id)]);const texts=L.map(x=>[x.date,an(x.from_account),an(x.to_account),x.amount,PN[x.created_by]||''].join(' '));return lsCard('cash_tr',['التاريخ','من','إلى','المبلغ','تم بواسطة',''],rows,texts,'ابحث باسم الحساب أو المستخدم أو المبلغ أو التاريخ...')}
-async function mvHtml(day,PN){const[a,b]=dayRange(day);const{data,error}=await sb.from('stock_movements').select('*').gte('created_at',a).lt('created_at',b).order('created_at',{ascending:false}).limit(3000);if(error)throw error;const L=(data||[]).filter(x=>cday(x.created_at)===day);const pn=id=>(by(C.products,id).name)||'';const wn=id=>(by(C.warehouses,id).name)||'';const tp=t=>MV_TYPE[t]||t;const rows=L.map(x=>[new Date(x.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit',timeZone:'Africa/Cairo'}),e(PN[x.user_id]||'—'),e(pn(x.product_id)),e(wn(x.warehouse_id)),e(tp(x.type)),x.qty,`${x.qty_before} ← ${x.qty_after}`]);const texts=L.map(x=>[PN[x.user_id]||'',pn(x.product_id),wn(x.warehouse_id),tp(x.type)].join(' '));return lsCard('mv',['الوقت','المستخدم','الصنف','المخزن','نوع الحركة','الكمية','الرصيد قبل ← بعد'],rows,texts,'ابحث باسم الصنف أو المستخدم أو نوع الحركة...')}
+async function mvHtml(day,PN){const[a,b]=dayRange(day);const{data,error}=await sb.from('stock_movements').select('*').gte('created_at',a).lt('created_at',b).order('created_at',{ascending:false}).limit(3000);if(error)throw error;const L=(data||[]).filter(x=>cday(x.created_at)===day);const pn=id=>(by(C.products,id).name)||'';const wn=id=>(by(C.warehouses,id).name)||'';const tp=t=>MV_TYPE[t]||t;const rows=L.map(x=>[new Date(x.created_at).toLocaleTimeString(locOf(),{hour:'2-digit',minute:'2-digit',timeZone:'Africa/Cairo'}),e(PN[x.user_id]||'—'),e(pn(x.product_id)),e(wn(x.warehouse_id)),e(tp(x.type)),x.qty,`${x.qty_before} ← ${x.qty_after}`]);const texts=L.map(x=>[PN[x.user_id]||'',pn(x.product_id),wn(x.warehouse_id),tp(x.type)].join(' '));return lsCard('mv',['الوقت','المستخدم','الصنف','المخزن','نوع الحركة','الكمية','الرصيد قبل ← بعد'],rows,texts,'ابحث باسم الصنف أو المستخدم أو نوع الحركة...')}
 async function auditView(){
  const today=cday(new Date()),day=window._auDay||today,[a,b]=dayRange(day);
  const from14=new Date(Date.now()-14*86400000).toISOString();
@@ -123,10 +125,10 @@ async function auditView(){
  if(ov.error)throw ov.error; if(q1.error)throw q1.error;
  const cnt={};(ov.data||[]).forEach(x=>{const d=cday(x.created_at);cnt[d]=(cnt[d]||0)+1});
  const L=(q1.data||[]).filter(x=>cday(x.created_at)===day);
- const rows=L.map(x=>[new Date(x.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit',timeZone:'Africa/Cairo'}),e(x.user_name||PN[x.user_id]||'—'),e(auAct(x.action)),e(auEnt(x.entity)),e(auDesc(x))]);
+ const rows=L.map(x=>[new Date(x.created_at).toLocaleTimeString(locOf(),{hour:'2-digit',minute:'2-digit',timeZone:'Africa/Cairo'}),e(x.user_name||PN[x.user_id]||'—'),e(auAct(x.action)),e(auEnt(x.entity)),e(auDesc(x))]);
  const texts=L.map(x=>[x.user_name||'',auAct(x.action),auEnt(x.entity),auDesc(x)].join(' '));
- const strip=[...Array(14)].map((_,i)=>cday(new Date(Date.now()-i*86400000))).map(d=>{const lbl=new Date(d+'T12:00:00Z').toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long',timeZone:'Africa/Cairo'});return `<button class="day-btn${d===day?' on':''}" onclick="auDay('${d}')"><b>${lbl}</b><small>${d===today?'اليوم · مفتوح':'مقفول'} · ${cnt[d]||0} عملية</small></button>`}).join('');
- const dl=new Date(day+'T12:00:00Z').toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Africa/Cairo'});
+ const strip=[...Array(14)].map((_,i)=>cday(new Date(Date.now()-i*86400000))).map(d=>{const lbl=new Date(d+'T12:00:00Z').toLocaleDateString(locOf(),{weekday:'long',day:'numeric',month:'long',timeZone:'Africa/Cairo'});return `<button class="day-btn${d===day?' on':''}" onclick="auDay('${d}')"><b>${lbl}</b><small>${d===today?'اليوم · مفتوح':'مقفول'} · ${cnt[d]||0} عملية</small></button>`}).join('');
+ const dl=new Date(day+'T12:00:00Z').toLocaleDateString(locOf(),{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Africa/Cairo'});
  const mv=await mvHtml(day,PN);
  return `<h2>سجل العمليات</h2>
  <div class="card"><div class="card-title"><b>اختر يوم</b><div class="row"><input type="date" value="${day}" onchange="auDay(this.value)">${day!==today?'<button class="s" onclick="auDay(\''+today+'\')">اليوم</button>':''}</div></div><div class="day-strip">${strip}</div><p class="muted">اليوم الحالي مفتوح وبيتسجل فيه. أي يوم قبله مقفول: بيتعرض للمراجعة بس ومش بيتعدّل.</p></div>
@@ -332,7 +334,7 @@ function fbShowSummary(data,st){
   const warn=st.hasData
     ?`<div class="card bad"><b>فيه بيانات موجودة حالياً</b><p>الجداول اللي فيها داتا: ${st.tables.map(t=>e(t)).join('، ')}${st.storageFiles?` · ملفات: ${st.storageFiles}`:''}</p><p>الاستعادة هتمسح كل ده وتكتب النسخة مكانه. هنعمل نسخة أمان من الحالية الأول وتتنزل على جهازك.</p><label class="fm-f"><span>اكتب "استعادة" عشان تأكد</span><input id="fb_confirm" placeholder="استعادة"></label></div>`
     :`<p class="muted">الداتا الحالية فاضية، الاستعادة هتتم مباشرة.</p>`;
-  document.getElementById('fbSummary').innerHTML=`<div class="card"><b>ملخص النسخة</b><p class="muted">تاريخ النسخة: ${e(new Date(data.created_at).toLocaleString('ar-EG'))}</p><p>جداول فيها داتا: ${tabs} · صفوف: ${rows} · مستخدمين: ${users} · ملفات: ${files}</p></div>${warn}<div class="row-btns"><button class="btn" onclick="fbRunRestore()">بدء الاستعادة</button></div>`;
+  document.getElementById('fbSummary').innerHTML=`<div class="card"><b>ملخص النسخة</b><p class="muted">تاريخ النسخة: ${e(new Date(data.created_at).toLocaleString(locOf()))}</p><p>جداول فيها داتا: ${tabs} · صفوف: ${rows} · مستخدمين: ${users} · ملفات: ${files}</p></div>${warn}<div class="row-btns"><button class="btn" onclick="fbRunRestore()">بدء الاستعادة</button></div>`;
 }
 async function fbRunRestore(){
   try{
@@ -406,7 +408,7 @@ async function dash(){
  let recent=[]; try{recent=await g('sales_invoice_balances','date');recent=recent.slice(-8).reverse()}catch{}
  const hr=new Date().getHours();
  const greet=hr<12?'صباح الخير':hr<17?'مساء الخير':'مساء النور';
- const today=new Date().toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+ const today=new Date().toLocaleDateString(locOf(),{weekday:'long',day:'numeric',month:'long',year:'numeric'});
  const periods=[['today','اليوم'],['week','آخر 7 أيام'],['month','هذا الشهر'],['custom','فترة مخصصة']];
  const num=x=>Number(x)||0;
  const profit=num(D.sales)-num(D.cogs)-num(D.expenses);
@@ -510,7 +512,7 @@ async function mfgView(){const products=C.products||[],boms=await g('boms',null)
  <div class="card"><b>المكونات المعرفة</b>${T(['BOM','المكوّن','الكمية'],bi.map(x=>[e(x.bom_id),e(by(products,x.component_product_id).name),x.qty]))}</div><div class="card">${T(['الأمر','التاريخ','الكمية','المادة','الإجمالي','الحالة',''],work.map(x=>[e(x.number),x.date,fmt(x.planned_qty),money(x.material_cost),money(x.total_cost),chip(x.status,x.status==='Completed'?'success':'warning'),x.status==='Completed'?'':`<button class="btn" onclick="act(()=>rpc('complete_work_order',{p_order:'${x.id}'}))">إكمال</button>`]))}</div>`}
 async function posView(){const sessions=await g('pos_sessions','opened_at');const inv=await g('sales_invoice_balances','date');return `${sectionHead('نقطة البيع','جلسات كاشير ومتابعة الإغلاق. الفاتورة نفسها تظل جزءًا من النظام المحاسبي.')}
  <div class="card form-card"><div class="row"><select id="psa">${O((C.accts||[]).filter(a=>a.type==='cash'))}</select><input id="pso" type="number" value="0" placeholder="رصيد افتتاحي"><button class="btn" onclick="act(()=>rpc('open_pos_session',{p_account:v('psa'),p_opening:n('pso')}))">فتح جلسة</button></div><div class="row"><select id="pss"><option value="">اختر جلسة مفتوحة</option>${sessions.filter(x=>x.status==='Open').map(x=>`<option value="${x.id}">${e(x.session_no)}</option>`).join('')}</select><input id="psc" type="number" placeholder="النقد الفعلي عند الإغلاق"><button class="btn danger" onclick="act(()=>rpc('close_pos_session',{p_session:v('pss'),p_closing:n('psc')}))">إغلاق الجلسة</button></div><div class="row"><select id="psi"><option value="">اختر فاتورة مدفوعة</option>${inv.filter(x=>x.status==='Posted'&&x.outstanding===0).slice(0,40).map(x=>`<option value="${x.id}">${e(x.number)} — ${fmt(x.total)}</option>`).join('')}</select><select id="pss2"><option value="">جلسة مفتوحة</option>${sessions.filter(x=>x.status==='Open').map(x=>`<option value="${x.id}">${e(x.session_no)}</option>`).join('')}</select><button class="btn soft" onclick="act(()=>rpc('record_pos_sale',{p_session:v('pss2'),p_invoice:v('psi')}))">ربط الفاتورة بالجلسة</button></div></div>
- <div class="card">${T(['الجلسة','الفتح','الإغلاق','افتتاحي','فعلي','الحالة'],sessions.map(x=>[e(x.session_no),new Date(x.opened_at).toLocaleString('ar-EG'),x.closed_at?new Date(x.closed_at).toLocaleString('ar-EG'):'—',money(x.opening_cash),x.closing_cash==null?'—':money(x.closing_cash),chip(x.status,x.status==='Closed'?'success':'warning')]))}</div>`}
+ <div class="card">${T(['الجلسة','الفتح','الإغلاق','افتتاحي','فعلي','الحالة'],sessions.map(x=>[e(x.session_no),new Date(x.opened_at).toLocaleString(locOf()),x.closed_at?new Date(x.closed_at).toLocaleString(locOf()):'—',money(x.opening_cash),x.closing_cash==null?'—':money(x.closing_cash),chip(x.status,x.status==='Closed'?'success':'warning')]))}</div>`}
 
 async function projView(){const [Pj,Tk]=await Promise.all([g('projects',null),g('service_tickets',null)]);return `${sectionHead('المشاريع والخدمات','متابعة المشاريع وتذاكر خدمة العملاء.')}
  <div class="card form-card"><div class="row"><input id="prcode" placeholder="كود المشروع"><input id="prname" placeholder="اسم المشروع"><select id="prcust"><option value="">عميل اختياري</option>${O(C.customers)}</select><input id="prbud" type="number" placeholder="الميزانية"><button class="btn" onclick="act(()=>ins('projects',{code:v('prcode'),name:v('prname'),customer_id:v('prcust')||null,budget:n('prbud'),status:'Open'}))">إنشاء مشروع</button></div><hr><div class="row"><select id="tsc"><option value="">كل العملاء</option>${O(C.customers)}</select><select id="tsp"><option value="">مشروع اختياري</option>${Pj.map(x=>`<option value="${x.id}">${e(x.code)} — ${e(x.name)}</option>`).join('')}</select><input id="tss" placeholder="موضوع التذكرة"><select id="tspv"><option>Normal</option><option>Low</option><option>High</option><option>Urgent</option></select><button class="btn soft" onclick="act(()=>ins('service_tickets',{ticket_no:'T-'+Date.now(),customer_id:v('tsc')||null,project_id:v('tsp')||null,subject:v('tss'),priority:v('tspv')}))">تذكرة جديدة</button></div></div>
@@ -547,9 +549,9 @@ async function shareholdersView(){
   const adminTools=shIsAdmin()?`<div class="row"><input type="month" id="shdm" value="${shMonthStart().slice(0,7)}"><button class="btn" onclick="shDistribute()">توزيع أرباح الشهر</button>
     <select id="shlm" onchange="act(()=>rpc('shareholder_set_loss_mode',{p_mode:this.value}))"><option value="proportional" ${lossMode==='proportional'?'selected':''}>الخسارة بنفس النسبة</option><option value="carry_forward" ${lossMode==='carry_forward'?'selected':''}>ترحيل الخسارة للشهر الجاي</option></select></div>`:'';
   const isAdm=shIsAdmin();
-  const pendingHtml=isAdm&&pending.length?`<div class="card"><h3>طلبات تعديل بيانات مساهمين (تحتاج موافقتك)</h3>${T(['المساهم','التعديل المطلوب','طلب من','التاريخ',''],pending.map(x=>[(x.shareholder_id?nameOf(S,x.shareholder_id):e(x.changes?.name||'مساهم جديد')),shChangeHtml(x.changes),PN[x.requested_by]||'—',new Date(x.requested_at).toLocaleString('ar-EG'),`<button class="btn" onclick="shDecide('${x.id}',true)">موافقة</button> <button class="btn danger" onclick="shDecide('${x.id}',false)">رفض</button>`]))}</div>`:'';
+  const pendingHtml=isAdm&&pending.length?`<div class="card"><h3>طلبات تعديل بيانات مساهمين (تحتاج موافقتك)</h3>${T(['المساهم','التعديل المطلوب','طلب من','التاريخ',''],pending.map(x=>[(x.shareholder_id?nameOf(S,x.shareholder_id):e(x.changes?.name||'مساهم جديد')),shChangeHtml(x.changes),PN[x.requested_by]||'—',new Date(x.requested_at).toLocaleString(locOf()),`<button class="btn" onclick="shDecide('${x.id}',true)">موافقة</button> <button class="btn danger" onclick="shDecide('${x.id}',false)">رفض</button>`]))}</div>`:'';
   const mine=!isAdm?R.filter(x=>x.requested_by===me?.id):[];
-  const myHtml=mine.length?`<div class="card"><h3>طلباتي</h3>${T(['المساهم','التعديل المطلوب','التاريخ','الحالة'],mine.map(x=>[(x.shareholder_id?nameOf(S,x.shareholder_id):e(x.changes?.name||'مساهم جديد')),shChangeHtml(x.changes),new Date(x.requested_at).toLocaleString('ar-EG'),shStatusChip(x.status)]))}</div>`:'';
+  const myHtml=mine.length?`<div class="card"><h3>طلباتي</h3>${T(['المساهم','التعديل المطلوب','التاريخ','الحالة'],mine.map(x=>[(x.shareholder_id?nameOf(S,x.shareholder_id):e(x.changes?.name||'مساهم جديد')),shChangeHtml(x.changes),new Date(x.requested_at).toLocaleString(locOf()),shStatusChip(x.status)]))}</div>`:'';
   const runsHtml=runs.length?T(['الشهر','صافي الربح','متوسط رأس المال','الحالة'],runs.map(r=>[e(String(r.month).slice(0,7)),money(r.net_profit),money(r.total_avg_capital),chip(r.status,r.status==='Distributed'?'success':r.status==='Carried'?'warning':'info')])):'<div class="empty">لا توجد توزيعات بعد</div>';
   const reqHtml=(pendingHtml+myHtml)||'<div class="empty">لا توجد طلبات</div>';
   const reqCount=isAdm?pending.length:mine.length;
@@ -573,7 +575,7 @@ function shShowRequests(){
     nameOfReq(x),
     shChangeHtml(x.changes),
     d.PN[x.requested_by]||'—',
-    new Date(x.requested_at).toLocaleString('ar-EG'),
+    new Date(x.requested_at).toLocaleString(locOf()),
     shStatusChip(x.status)+(d.isAdm&&x.status==='Pending'?` <button class="btn" onclick="shDecide('${x.id}',true)">موافقة</button> <button class="btn danger" onclick="shDecide('${x.id}',false)">رفض</button>`:'')
   ])):'<div class="empty">لا توجد طلبات في هذا القسم</div>';
   showModal(`<h3>طلبات تعديل المساهمين</h3><div class="row" style="margin-bottom:10px">${tabsHtml}</div><div>${body}</div>`,'<button class="btn soft" onclick="closeModal()">إغلاق</button>',true);
@@ -591,7 +593,7 @@ function shPrintMembers(){
   const d=window._shData;if(!d)return toast('حدّث الصفحة وجرّب تاني');
   let tc=0,td=0;
   const rows=d.S.map(x=>{const b=shBal(d.M,x.id);tc+=b.cap;td+=b.due;return `<tr><td>${e(x.name)}</td><td>${e(x.phone||'—')}</td><td>${e(x.email||'—')}</td><td>${e(shModeLabel(x.profit_mode))}</td><td>${x.active?'مفعّل':'موقوف'}</td><td>${money(b.cap)}</td><td>${money(b.due)}</td></tr>`}).join('');
-  printHtml('بيانات المساهمين',`<h2>بيانات المساهمين</h2><p class="muted">تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</p><table><tr><th>الاسم</th><th>الموبايل</th><th>الإيميل</th><th>طريقة الربح</th><th>الحالة</th><th>رأس المال</th><th>المستحق للصرف</th></tr>${rows}<tr class="tot"><td colspan="5">الإجمالي</td><td>${money(tc)}</td><td>${money(td)}</td></tr></table>`);
+  printHtml('بيانات المساهمين',`<h2>بيانات المساهمين</h2><p class="muted">تاريخ الطباعة: ${new Date().toLocaleDateString(locOf())}</p><table><tr><th>الاسم</th><th>الموبايل</th><th>الإيميل</th><th>طريقة الربح</th><th>الحالة</th><th>رأس المال</th><th>المستحق للصرف</th></tr>${rows}<tr class="tot"><td colspan="5">الإجمالي</td><td>${money(tc)}</td><td>${money(td)}</td></tr></table>`);
 }
 function shPrintDistributions(){
   const d=window._shData;if(!d)return toast('حدّث الصفحة وجرّب تاني');
@@ -599,7 +601,7 @@ function shPrintDistributions(){
   const runsRows=d.runs.map(r=>`<tr><td>${e(String(r.month).slice(0,7))}</td><td>${money(r.net_profit)}</td><td>${money(r.total_avg_capital)}</td><td>${e(r.status==='Distributed'?'تم التوزيع':r.status==='Carried'?'مرحّل':'مستهلك')}</td></tr>`).join('');
   const movs=d.M.filter(m=>SH_PROFIT_TYPES[m.type]).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
   const movRows=movs.map(m=>`<tr><td>${e(String(m.date).slice(0,10))}</td><td>${name(m.shareholder_id)}</td><td>${e(SH_PROFIT_TYPES[m.type])}</td><td>${money(m.amount)}</td></tr>`).join('');
-  printHtml('توزيعات الأرباح',`<h2>توزيعات الأرباح</h2><p class="muted">تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</p>
+  printHtml('توزيعات الأرباح',`<h2>توزيعات الأرباح</h2><p class="muted">تاريخ الطباعة: ${new Date().toLocaleDateString(locOf())}</p>
     <h3>الشهور</h3><table><tr><th>الشهر</th><th>صافي الربح</th><th>متوسط رأس المال</th><th>الحالة</th></tr>${runsRows||'<tr><td colspan="4">لا توجد توزيعات</td></tr>'}</table>
     <h3>تفاصيل الحركات</h3><table><tr><th>التاريخ</th><th>المساهم</th><th>النوع</th><th>المبلغ</th></tr>${movRows||'<tr><td colspan="4">لا توجد حركات أرباح</td></tr>'}</table>`);
 }
@@ -634,11 +636,11 @@ async function shDistribute(){
 }
 async function shDecide(id,ok){closeModal();await act(()=>rpc('shareholder_decide_change',{p_request:id,p_approve:ok,p_notes:null}))}
 
-async function approvalView(){const L=await g('approval_requests','requested_at');return `${sectionHead('الاعتمادات','مراجعة واعتماد العمليات قبل ترحيلها أو حسب سياسة الشركة.')}<div class="card">${L.length?T(['العملية','الحالة','طالب الاعتماد','التاريخ','ملاحظات',''],L.map(x=>[e(x.entity),chip(x.status,x.status==='Approved'?'success':x.status==='Rejected'?'danger':'warning'),e(x.requested_by),new Date(x.requested_at).toLocaleString('ar-EG'),e(x.notes||''),x.status==='Pending'?`<button class="btn" onclick="act(()=>rpc('decide_approval',{p_request:'${x.id}',p_approve:true,p_notes:null}))">اعتماد</button> <button class="btn danger" onclick="act(()=>rpc('decide_approval',{p_request:'${x.id}',p_approve:false,p_notes:null}))">رفض</button>`:''])):'<div class="empty">لا توجد طلبات اعتماد</div>'}</div>`}
+async function approvalView(){const L=await g('approval_requests','requested_at');return `${sectionHead('الاعتمادات','مراجعة واعتماد العمليات قبل ترحيلها أو حسب سياسة الشركة.')}<div class="card">${L.length?T(['العملية','الحالة','طالب الاعتماد','التاريخ','ملاحظات',''],L.map(x=>[e(x.entity),chip(x.status,x.status==='Approved'?'success':x.status==='Rejected'?'danger':'warning'),e(x.requested_by),new Date(x.requested_at).toLocaleString(locOf()),e(x.notes||''),x.status==='Pending'?`<button class="btn" onclick="act(()=>rpc('decide_approval',{p_request:'${x.id}',p_approve:true,p_notes:null}))">اعتماد</button> <button class="btn danger" onclick="act(()=>rpc('decide_approval',{p_request:'${x.id}',p_approve:false,p_notes:null}))">رفض</button>`:''])):'<div class="empty">لا توجد طلبات اعتماد</div>'}</div>`}
 
-async function taxdocView(){const L=await g('tax_documents','created_at');return `${sectionHead('المستندات الضريبية','حالة تجهيز وإرسال المستندات. التكامل الرسمي مع الجهة الضريبية يحتاج بيانات اعتماد/API حقيقية.')}<div class="card form-card"><div class="row"><select id="tdi">${(await g('sales_invoices','date')).filter(x=>x.status==='Posted').map(x=>`<option value="${x.id}">${e(x.number)}</option>`).join('')}</select><button class="btn" onclick="act(()=>rpc('register_tax_document',{p_invoice:v('tdi')}))">تسجيل مستند</button></div></div><div class="card">${T(['الفاتورة','الحالة','UUID الخارجي','Submission','آخر تحديث',''],L.map(x=>[e(x.invoice_id),chip(x.status,x.status==='Accepted'?'success':x.status==='Rejected'?'danger':'warning'),e(x.external_uuid||'—'),e(x.submission_id||'—'),new Date(x.updated_at).toLocaleString('ar-EG'),x.status==='Pending'?`<button class="btn soft" onclick="act(()=>rpc('update_tax_document',{p_doc:'${x.id}',p_status:'Submitted',p_external_uuid:null,p_submission_id:null,p_error:null}))">تحديث Submitted</button>`:'']))}</div>`}
+async function taxdocView(){const L=await g('tax_documents','created_at');return `${sectionHead('المستندات الضريبية','حالة تجهيز وإرسال المستندات. التكامل الرسمي مع الجهة الضريبية يحتاج بيانات اعتماد/API حقيقية.')}<div class="card form-card"><div class="row"><select id="tdi">${(await g('sales_invoices','date')).filter(x=>x.status==='Posted').map(x=>`<option value="${x.id}">${e(x.number)}</option>`).join('')}</select><button class="btn" onclick="act(()=>rpc('register_tax_document',{p_invoice:v('tdi')}))">تسجيل مستند</button></div></div><div class="card">${T(['الفاتورة','الحالة','UUID الخارجي','Submission','آخر تحديث',''],L.map(x=>[e(x.invoice_id),chip(x.status,x.status==='Accepted'?'success':x.status==='Rejected'?'danger':'warning'),e(x.external_uuid||'—'),e(x.submission_id||'—'),new Date(x.updated_at).toLocaleString(locOf()),x.status==='Pending'?`<button class="btn soft" onclick="act(()=>rpc('update_tax_document',{p_doc:'${x.id}',p_status:'Submitted',p_external_uuid:null,p_submission_id:null,p_error:null}))">تحديث Submitted</button>`:'']))}</div>`}
 
-async function integrationsView(){const [Cnx,Ev]=await Promise.all([g('integration_connections','created_at'),g('integration_events','created_at')]);return `${sectionHead('التكاملات','طبقة موحدة لتتبع Shopify / WooCommerce / Salla / Magento / Custom. لا يتم إرسال بيانات خارجية تلقائيًا قبل ضبط الاتصال.')}<div class="card form-card"><div class="row"><select id="iprov"><option>Shopify</option><option>WooCommerce</option><option>Salla</option><option>Magento</option><option>Custom</option></select><input id="inm" placeholder="اسم الاتصال"><input id="iurl" placeholder="Base URL"><button class="btn" onclick="act(()=>ins('integration_connections',{provider:v('iprov'),name:v('inm'),base_url:v('iurl'),active:false,config:{}}))">إضافة اتصال</button></div></div><div class="card">${T(['المزود','الاسم','الرابط','نشط'],Cnx.map(x=>[e(x.provider),e(x.name),e(x.base_url||'—'),chip(x.active?'نعم':'لا',x.active?'success':'warning')]))}</div><div class="card">${T(['التاريخ','الاتجاه','النوع','الحالة','الخطأ'],Ev.map(x=>[new Date(x.created_at).toLocaleString('ar-EG'),x.direction,x.event_type,chip(x.status,x.status==='Succeeded'?'success':x.status==='Failed'?'danger':'warning'),e(x.error_message||'—')]))}</div>`}
+async function integrationsView(){const [Cnx,Ev]=await Promise.all([g('integration_connections','created_at'),g('integration_events','created_at')]);return `${sectionHead('التكاملات','طبقة موحدة لتتبع Shopify / WooCommerce / Salla / Magento / Custom. لا يتم إرسال بيانات خارجية تلقائيًا قبل ضبط الاتصال.')}<div class="card form-card"><div class="row"><select id="iprov"><option>Shopify</option><option>WooCommerce</option><option>Salla</option><option>Magento</option><option>Custom</option></select><input id="inm" placeholder="اسم الاتصال"><input id="iurl" placeholder="Base URL"><button class="btn" onclick="act(()=>ins('integration_connections',{provider:v('iprov'),name:v('inm'),base_url:v('iurl'),active:false,config:{}}))">إضافة اتصال</button></div></div><div class="card">${T(['المزود','الاسم','الرابط','نشط'],Cnx.map(x=>[e(x.provider),e(x.name),e(x.base_url||'—'),chip(x.active?'نعم':'لا',x.active?'success':'warning')]))}</div><div class="card">${T(['التاريخ','الاتجاه','النوع','الحالة','الخطأ'],Ev.map(x=>[new Date(x.created_at).toLocaleString(locOf()),x.direction,x.event_type,chip(x.status,x.status==='Succeeded'?'success':x.status==='Failed'?'danger':'warning'),e(x.error_message||'—')]))}</div>`}
 
 async function orgView(){const [B,CC]=await Promise.all([g('branches','name'),g('cost_centers','code')]);return `${sectionHead('الفروع ومراكز التكلفة','الأبعاد التنظيمية التي تربط الحركات والتقارير.')}<div class="card form-card"><div class="row"><input id="obn" placeholder="اسم الفرع"><input id="obc" placeholder="الكود"><button class="btn" onclick="act(()=>ins('branches',{name:v('obn'),code:v('obc')}))">إضافة فرع</button><input id="occ" placeholder="كود المركز"><input id="ocn" placeholder="اسم المركز"><button class="btn soft" onclick="act(()=>ins('cost_centers',{code:v('occ'),name:v('ocn')}))">إضافة مركز تكلفة</button></div></div><div class="report-cards"><div class="card">${T(['الفرع','الكود','الحالة'],B.map(x=>[e(x.name),e(x.code||'—'),chip(x.active?'نشط':'موقوف',x.active?'success':'warning')]))}</div><div class="card">${T(['الكود','المركز','الحالة'],CC.map(x=>[e(x.code),e(x.name),chip(x.active?'نشط':'موقوف',x.active?'success':'warning')]))}</div></div>`}
 
@@ -879,7 +881,7 @@ function bottomNav(){return NAV.filter(x=>can(x[0])).filter(x=>['dash','sales','
 let _qTimer=null;
 function qSearch(el){window._q=el.value;clearTimeout(_qTimer);_qTimer=setTimeout(()=>{R(1).then(()=>{const q=document.getElementById('q');if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}})},250)}
 function readCachedC(){const r=k=>{try{return JSON.parse(localStorage.getItem('erp_cache_'+k)||'null')}catch{return null}};const products=r('products'),customers=r('customers'),suppliers=r('suppliers'),warehouses=r('warehouses'),stock=r('stock'),cb=r('cb'),sbal=r('sbal');if(!products||!customers||!suppliers||!warehouses||!stock||!cb||!sbal)return null;return{products,customers,suppliers,warehouses,accts:r('cash_accounts')||[],stock,cb,sbal}}
-function lgShell(inner){return `<div class="lg-page"><div class="lg-wrap"><aside class="lg-brand"><div class="lg-bg"></div><div class="lg-brand-top"><div class="lg-wordmark-wrap"><img class="lg-wordmark" src="./brand/fedo-logo-dark.svg" alt="FEDO ERP"><small class="powered">${POWERED_BY_TEXT}</small></div></div><div class="lg-brand-mid"><h1>كل أعمال شركتك في مكان واحد</h1><p>مبيعات ومشتريات ومخزون ومحاسبة وموارد بشرية، بصلاحيات دقيقة وتحقق ثنائي للإدارة.</p><ul class="lg-feats"><li><span>${ico('receipt')}</span>فواتير مبيعات ومشتريات بترقيم مستقل</li><li><span>${ico('box')}</span>مخزون متعدد المخازن مع تتبع وتنبيهات</li><li><span>${ico('chart')}</span>تقارير مالية وميزان مراجعة لحظي</li><li><span>${ico('shield')}</span>حماية بالتحقق الثنائي والجهاز الموثوق</li></ul></div><div class="lg-brand-foot">الإصدار ${APP_VERSION}</div></aside><section class="lg-card">${fedoThemeBtn("theme-btn lg-theme")}${inner}</section></div></div>`}
+function lgShell(inner){return `<div class="lg-page"><div class="lg-wrap"><aside class="lg-brand"><div class="lg-bg"></div><div class="lg-brand-top"><div class="lg-wordmark-wrap"><img class="lg-wordmark" src="./brand/fedo-logo-dark.svg" alt="FEDO ERP"></div></div><div class="lg-brand-mid"><h1>كل أعمال شركتك في مكان واحد</h1><p>مبيعات ومشتريات ومخزون ومحاسبة وموارد بشرية، بصلاحيات دقيقة وتحقق ثنائي للإدارة.</p><ul class="lg-feats"><li><span>${ico('receipt')}</span>فواتير مبيعات ومشتريات بترقيم مستقل</li><li><span>${ico('box')}</span>مخزون متعدد المخازن مع تتبع وتنبيهات</li><li><span>${ico('chart')}</span>تقارير مالية وميزان مراجعة لحظي</li><li><span>${ico('shield')}</span>حماية بالتحقق الثنائي والجهاز الموثوق</li></ul></div><div class="lg-brand-foot">الإصدار ${APP_VERSION}</div></aside><section class="lg-card">${fedoThemeBtn("theme-btn lg-theme")}${inner}</section></div></div>`}
 function _loginScreen(){$('#app').innerHTML=lgShell(`<div class="lg-head"><span class="lg-eyebrow">مرحبًا بيك</span><h2>تسجيل الدخول</h2><p>ادخل ببريدك الإلكتروني أو اسم المستخدم أو رقم الموبايل.</p></div><div class="lg-field"><label for="lu">الإيميل أو اسم المستخدم أو الموبايل</label><div class="lg-in"><span>@</span><input id="lu" type="text" autocomplete="username" placeholder="name@company.com"></div></div><div class="lg-field"><label for="lp">كلمة المرور</label><div class="lg-in"><span>${ico('lock')}</span><input id="lp" type="password" autocomplete="current-password" placeholder="••••••••"><button type="button" class="lg-eye" onclick="lgTogglePw()" aria-label="إظهار أو إخفاء كلمة المرور">إظهار</button></div></div><button class="lg-submit" onclick="login()">تسجيل الدخول</button><p class="lg-note">${ico('lockkey')} الاتصال مشفّر. الحساب الأول في المشروع الجديد يُنشأ كمدير حسب إعدادات قاعدة البيانات.</p>`)}
 function _inactiveScreen(){$('#app').innerHTML=lgShell(`<div class="lg-head"><span class="lg-eyebrow">خطوة واحدة متبقية</span><h2>الحساب بانتظار التفعيل</h2><p>سيتطلب الحساب تفعيل المدير قبل استخدام النظام.</p></div><button class="lg-submit" onclick="logout()">خروج</button>`)}
 function lgTogglePw(){const i=document.getElementById('lp');if(!i)return;const show=i.type==='password';i.type=show?'text':'password';const b=document.querySelector('.lg-eye');if(b)b.textContent=show?'إخفاء':'إظهار'}
@@ -971,7 +973,7 @@ async function devSetView(){
   const st=await rpc('app_lock_state',{});
   const rn={admin:'الأدمن',accountant:'المحاسب',sales:'المبيعات',store:'المخزن'};
   const who=(st.roles||[]).map(r=>rn[r]||r).join('، ')||'المطور بس';
-  const until=st.until?new Date(st.until).toLocaleString('ar-EG',{timeZone:'Africa/Cairo'}):'يدوي (بيتفتح بإيدك)';
+  const until=st.until?new Date(st.until).toLocaleString(locOf(),{timeZone:'Africa/Cairo'}):'يدوي (بيتفتح بإيدك)';
   return `${sectionHead('إعدادات المطور','أدوات المطور بس. كل تغيير هنا بيتسجل في سجل العمليات.')}
   <div class="card"><div class="card-title"><b>قفل الموقع</b> ${chip(st.locked?'مقفول':'مفتوح',st.locked?'warning':'success')}</div>
     <p class="muted">الرسالة: ${e(st.msg||'—')}</p>
@@ -1537,7 +1539,7 @@ function dySet(key,d){window._dy=window._dy||{};const t=cday(new Date());window.
 function dayStrip(key,day,meta){
   const today=cday(new Date());
   const btns=[...Array(14)].map((_,i)=>cday(new Date(Date.now()-i*86400000))).map(d=>{
-    const lbl=new Date(d+'T12:00:00Z').toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long',timeZone:'Africa/Cairo'});
+    const lbl=new Date(d+'T12:00:00Z').toLocaleDateString(locOf(),{weekday:'long',day:'numeric',month:'long',timeZone:'Africa/Cairo'});
     const m=meta?meta(d):'';
     return `<button type="button" class="day-btn${d===day?' on':''}" onclick="dySet('${key}','${d}')"><b>${lbl}</b><small>${d===today?'اليوم · مفتوح':'مقفول'}${m?' · '+m:''}</small></button>`;
   }).join('');
@@ -1860,10 +1862,10 @@ async function cashLedgerHtml(){
   const L=(res.data||[]).filter(x=>cday(x.created_at)===day);
   const an=id=>(by(C.accts,id).name)||'—';
   let tin=0,tout=0;L.forEach(x=>{if(x.direction==='in')tin+=+x.amount;else tout+=+x.amount});
-  const tm=x=>new Date(x.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit',timeZone:'Africa/Cairo'});
+  const tm=x=>new Date(x.created_at).toLocaleTimeString(locOf(),{hour:'2-digit',minute:'2-digit',timeZone:'Africa/Cairo'});
   const rows=L.map(x=>[tm(x),e(an(x.account_id)),x.direction==='in'?'<span class="good">داخل ＋</span>':'<span class="bad">خارج −</span>',fmt(x.amount),e(LEDGER_SRC[x.source]||x.source||'—'),e(PN[x.user_id]||'—')]);
   const texts=L.map(x=>[an(x.account_id),LEDGER_SRC[x.source]||x.source||'',PN[x.user_id]||'',x.direction==='in'?'داخل':'خارج'].join(' '));
-  const dl=new Date(day+'T12:00:00Z').toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Africa/Cairo'});
+  const dl=new Date(day+'T12:00:00Z').toLocaleDateString(locOf(),{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Africa/Cairo'});
   ptStore('led','حركة الخزينة — '+dl,'',['الوقت','الحساب','الاتجاه','المبلغ','المصدر','المستخدم'],L.map(x=>[tm(x),e(an(x.account_id)),x.direction==='in'?'داخل':'خارج',fmt(x.amount),e(LEDGER_SRC[x.source]||x.source||'—'),e(PN[x.user_id]||'—')]),`<p class="tot">داخل: ${fmt(tin)} · خارج: ${fmt(tout)} · الصافي: ${fmt(tin-tout)}</p>`);
   return `${dayStrip('led',day)}<div class="card"><div class="card-title"><b>حركة ${e(dl)}</b><div class="row"><span class="chip success">داخل ${fmt(tin)}</span><span class="chip danger">خارج ${fmt(tout)}</span><span class="chip info">الصافي ${fmt(tin-tout)}</span><button class="s" onclick="ptPrint('led')">طباعة هذا اليوم</button></div></div>${lsCard('led',['الوقت','الحساب','الاتجاه','المبلغ','المصدر','المستخدم'],rows,texts,'ابحث بالحساب أو المصدر أو المستخدم...')}</div>`;
 }
@@ -1929,7 +1931,7 @@ async function hrView(){
     const form=isAdm?`<div class="card form-card"><div class="card-title"><b>تسجيل حضور يدوي</b><span class="muted">الأدمن بس. اختار الموظف والتاريخ، وبعدين الوقت لو معاك.</span></div>
       <div class="fm-grid"><label class="fm-f"><span>الموظف</span><select id="he">${O(E)}</select></label><label class="fm-f"><span>التاريخ</span><input id="hd" type="date" value="${today}"></label><label class="fm-f"><span>الحالة</span><select id="hs"><option value="Present">حاضر</option><option value="Late">متأخر</option><option value="Absent">غايب</option><option value="Leave">إجازة</option><option value="Holiday">عطلة</option></select></label><label class="fm-f"><span>وقت الحضور</span><input id="hi" type="time"></label><label class="fm-f"><span>وقت الانصراف</span><input id="ho" type="time"></label></div>
       <div class="row" style="margin-top:12px"><button class="btn" onclick="attSave()">حفظ الحضور</button></div></div>`:`<div class="card"><span class="muted">تسجيل الحضور والانصراف للأدمن بس. دي قراءة للسجل.</span></div>`;
-    const attT=t=>t?new Date(t).toLocaleTimeString('ar-EG',{timeZone:'Africa/Cairo',hour:'2-digit',minute:'2-digit'}):'—';
+    const attT=t=>t?new Date(t).toLocaleTimeString(locOf(),{timeZone:'Africa/Cairo',hour:'2-digit',minute:'2-digit'}):'—';
     const rows=A.slice(-200).reverse().map(x=>[x.work_date,e(by(E,x.employee_id).name||'—'),attT(x.check_in),attT(x.check_out),e(x.status)]);
     body=form+`<div class="card">${T(['التاريخ','الموظف','الحضور','الانصراف','الحالة'],rows)}</div>`;
   }
@@ -2061,10 +2063,10 @@ async function auditView(){
   if(ov.error)throw ov.error;if(q1.error)throw q1.error;
   const cnt={};(ov.data||[]).forEach(x=>{const d=cday(x.created_at);cnt[d]=(cnt[d]||0)+1});
   const L=(q1.data||[]).filter(x=>cday(x.created_at)===day);
-  const tm=x=>new Date(x.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit',timeZone:'Africa/Cairo'});
+  const tm=x=>new Date(x.created_at).toLocaleTimeString(locOf(),{hour:'2-digit',minute:'2-digit',timeZone:'Africa/Cairo'});
   const rows=L.map(x=>[tm(x),e(x.user_name||PN[x.user_id]||'—'),e(auAct(x.action)),e(auEnt(x.entity)),e(auDesc(x))]);
   const texts=L.map(x=>[x.user_name||'',auAct(x.action),auEnt(x.entity),auDesc(x)].join(' '));
-  const dl=new Date(day+'T12:00:00Z').toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Africa/Cairo'});
+  const dl=new Date(day+'T12:00:00Z').toLocaleDateString(locOf(),{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Africa/Cairo'});
   const bar=secBar('aud',[['log','سجل العمليات'],['mv','حركات المخزون']],'log');
   let body;
   if(sec==='mv'){
@@ -2204,7 +2206,7 @@ async function expensesView(){
   const tot=rowsDay.reduce((a,x)=>a+Number(x.amount||0),0);
   const acctName=id=>(by(C.accts,id).name)||'—';
   const cells=rowsDay.map(x=>[e(x.category||''),e(x.description||'—'),e(x.notes||'—'),money(x.amount),e(acctName(x.account_id))]);
-  const dl=new Date(day+'T12:00:00Z').toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Africa/Cairo'});
+  const dl=new Date(day+'T12:00:00Z').toLocaleDateString(locOf(),{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Africa/Cairo'});
   ptStore('exp','مصروفات '+dl,'',['التصنيف','الوصف','التفاصيل','المبلغ','الحساب'],rowsDay.map(x=>[e(x.category||''),e(x.description||'—'),e(x.notes||'—'),fmt(x.amount),e(acctName(x.account_id))]),`<p class="tot">الإجمالي: ${fmt(tot)}</p>`);
   return sectionHead('المصروفات','المصروف بيتسجل بتاريخ اليوم. الأيام السابقة للعرض والطباعة.')+
     `<div class="card form-card"><div class="card-title"><b>تسجيل مصروف (اليوم)</b></div>
@@ -2261,8 +2263,8 @@ async function cashLedgerHtml(){
   const CB=Object.fromEntries((cbRows||[]).map(x=>[x.account_id,+x.balance]));
   const an=id=>(by(C.accts,id).name)||'—';
   let tin=0,tout=0;L.forEach(x=>{if(x.direction==='in')tin+=+x.amount;else tout+=+x.amount});
-  const tm=x=>new Date(x.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit',timeZone:'Africa/Cairo'});
-  const dl=new Date(day+'T12:00:00Z').toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Africa/Cairo'});
+  const tm=x=>new Date(x.created_at).toLocaleTimeString(locOf(),{hour:'2-digit',minute:'2-digit',timeZone:'Africa/Cairo'});
+  const dl=new Date(day+'T12:00:00Z').toLocaleDateString(locOf(),{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Africa/Cairo'});
   // جدول الأرصدة لكل حساب
   const per=C.accts.map(acc=>{
     const mv=L.filter(x=>x.account_id===acc.id);
@@ -2453,7 +2455,7 @@ async function attSelfHtml(){
   if(!emp)return '';
   const today=cday(new Date());
   const{data:rec}=await sb.from('attendance').select('*').eq('employee_id',emp.id).eq('work_date',today).maybeSingle();
-  const tm=t=>t?new Date(t).toLocaleTimeString('ar-EG',{timeZone:'Africa/Cairo',hour:'2-digit',minute:'2-digit'}):'—';
+  const tm=t=>t?new Date(t).toLocaleTimeString(locOf(),{timeZone:'Africa/Cairo',hour:'2-digit',minute:'2-digit'}):'—';
   const canIn=!rec||!rec.check_in, canOut=!!(rec&&rec.check_in&&!rec.check_out);
   return `<div class="card att-self"><div class="card-title"><b>حضوري النهارده: ${e(emp.name)}</b><span class="muted">${today}</span></div>
     <div class="att-self-row"><div><small class="muted">الحضور</small><b>${tm(rec?.check_in)}</b></div><div><small class="muted">الانصراف</small><b>${tm(rec?.check_out)}</b></div>
@@ -3603,7 +3605,7 @@ function applyDialect(root){
     }
   });
 }
-function setDialect(x){try{localStorage.setItem('erp_dialect',x)}catch{}document.querySelectorAll('.lang-seg button').forEach(b=>{const on=b.getAttribute('onclick')?.includes("'"+x+"'");b.classList.toggle('on',!!on);b.setAttribute('aria-pressed',String(!!on))});applyDialect(document.body);document.documentElement.lang=x==='en'?'en':'ar'}
+function setDialect(x){try{localStorage.setItem('erp_dialect',x)}catch{}document.querySelectorAll('.lang-seg button').forEach(b=>{const on=b.getAttribute('onclick')?.includes("'"+x+"'");b.classList.toggle('on',!!on);b.setAttribute('aria-pressed',String(!!on))});applyDialect(document.body);document.documentElement.lang=x==='en'?'en':'ar';if(me)R()}
 function toggleDialect(){
   const cur=dialectMode();
   const opts=[['eg','عامية مصرية'],['msa','فصحى'],['en','English']];

@@ -1,4 +1,4 @@
-const CACHE='fedo-test-shell-v6';
+const CACHE='fedo-test-shell-v7';
 const ASSETS=['./','./index.html','./app.js','./style.css','./theme.css','./theme-palette.css','./theme-accents.css','./manifest.webmanifest','./brand/fedo-mark.svg','./brand/fedo-symbol-dark.svg','./brand/fedo-logo-dark.svg','./icons/icon.svg','./icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));

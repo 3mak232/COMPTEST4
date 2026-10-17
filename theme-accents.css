@@ -396,3 +396,4 @@ nav a.on::before{background:#18B58B;box-shadow:0 0 12px rgba(24,181,139,.7)}
 .brandbox{align-items:center}
 .brandbox>.brandmark{flex:0 0 auto}
 .brandbox>div:not(.brandmark):not(.powered){flex:1 1 0;min-width:0}
+.hm-btn-main{background:var(--btn)!important}
