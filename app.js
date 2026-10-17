@@ -1512,6 +1512,7 @@ async function printInvoice(id,s){
       </div>
       ${hdr.notes?'<div class="notes"><b>ملاحظات:</b>\n'+e(hdr.notes)+'</div>':''}
       <div class="sign"><div>توقيع المستلم</div><div>توقيع المسؤول</div></div>
+      ${vendorCreditHtml()}
     <script>window.onload=function(){setTimeout(function(){window.print()},200)}<\/script></body></html>`;
     w.document.open(); w.document.write(html); w.document.close();
   }catch(x){
@@ -2320,7 +2321,7 @@ function brandHtml(){
 const _printHtml0=printHtml;
 printHtml=function(title,body,opts){
   const head=(opts&&opts.brand===false)?'':brandHtml();
-  const foot=(opts&&opts.brand===false)||!printCfg().footer?'':`<div style="margin-top:18px;padding-top:8px;border-top:1px solid #E3E0D4;color:#5B6878;font-size:11px;text-align:center">${e(printCfg().footer)}</div>`;
+  const foot=(opts&&opts.brand===false)?'':((printCfg().footer?`<div style="margin-top:18px;padding-top:8px;border-top:1px solid #E3E0D4;color:#5B6878;font-size:11px;text-align:center">${e(printCfg().footer)}</div>`:'')+vendorCreditHtml());
   return _printHtml0(title,head+body+foot);
 };
 const _boot0=boot;
@@ -3639,7 +3640,13 @@ async function attSave(){
 }
 
 // ---- تخصيص الطباعة (الأدمن والمطور من الويب) ----
-const PRINT_DEFAULTS={showLogo:true,showName:true,showAddress:true,logoMaxH:60,accent:'#095F4A',footer:''};
+const PRINT_DEFAULTS={showLogo:true,showName:true,showAddress:true,logoMaxH:60,accent:'#095F4A',footer:'',vendorName:'FEDO ERP',vendorUrl:'',vendorLogo:true};
+// رصيد مزوّد النظام أسفل الطباعة (اسم + موقع + لوجو النظام)، قابل للتخصيص من تخصيص الطباعة
+function vendorCreditHtml(){const c=printCfg();if(!c.vendorName&&!c.vendorUrl&&!c.vendorLogo)return '';
+  const logo=c.vendorLogo?`<img src="${e(new URL('brand/fedo-logo-light.svg',location.href).href)}" alt="" style="height:16px;vertical-align:middle;margin-inline-end:6px">`:'';
+  const name=c.vendorName?`<b>${e(c.vendorName)}</b>`:'';
+  const url=c.vendorUrl?`${name?' · ':''}<span dir="ltr">${e(c.vendorUrl)}</span>`:'';
+  return `<div class="vendor-credit" style="margin-top:14px;padding-top:8px;border-top:1px solid #E3E0D4;color:#5B6878;font-size:11px;text-align:center">${logo}${name}${url}</div>`}
 function printCfg(){const s=(window._co&&window._co.print_settings)||{};return Object.assign({},PRINT_DEFAULTS,s)}
 function printCardHtml(){
   if(!me||me.role!=='admin')return '';
@@ -3652,12 +3659,15 @@ function printCardHtml(){
       <label class="fm-f"><span>حجم اللوجو (بكسل)</span><input id="pc_h" type="number" min="20" max="160" value="${e(c.logoMaxH)}"></label>
       <label class="fm-f"><span>لون الخط الفاصل</span><input id="pc_acc" type="color" value="${e(c.accent)}" style="min-height:42px;padding:4px"></label>
       <label class="fm-f"><span>نص أسفل الطباعة</span><input id="pc_foot" value="${e(c.footer)}" placeholder="مثلاً: شكراً لتعاملكم معنا"></label>
+      <label class="fm-f"><span>اسم النظام/صاحب الحساب (أسفل الطباعة)</span><input id="pc_vname" value="${e(c.vendorName)}" placeholder="مثلاً: FEDO ERP أو اسمك"></label>
+      <label class="fm-f"><span>موقع أو رابط (اختياري)</span><input id="pc_vurl" value="${e(c.vendorUrl)}" placeholder="example.com" dir="ltr"></label>
     </div>
+    <div class="co-switches">${chk('pc_vlogo',c.vendorLogo,'إظهار لوجو النظام أسفل الطباعة')}</div>
     <div class="co-foot"><small class="muted">التغيير بيظهر في أي طباعة جديدة.</small><button onclick="savePrintCfg()">حفظ تخصيص الطباعة</button></div></div></div>`;
 }
 async function savePrintCfg(){
   const cfg={showLogo:$('#pc_logo').checked,showName:$('#pc_name').checked,showAddress:$('#pc_addr').checked,
-    logoMaxH:Math.max(20,Math.min(160,parseInt(v('pc_h'))||60)),accent:v('pc_acc')||'#095F4A',footer:v('pc_foot')||''};
+    logoMaxH:Math.max(20,Math.min(160,parseInt(v('pc_h'))||60)),accent:v('pc_acc')||'#095F4A',footer:v('pc_foot')||'',vendorName:v('pc_vname')||'',vendorUrl:v('pc_vurl')||'',vendorLogo:$('#pc_vlogo').checked};
   await act(async()=>{await upd('company_settings',1,{print_settings:cfg});await refreshCo()});
 }
 

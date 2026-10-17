@@ -375,3 +375,12 @@ nav a.on::before{background:#18B58B;box-shadow:0 0 12px rgba(24,181,139,.7)}
 :root[data-theme="dark"] .mfa-ic{color:var(--blue2)}
 .hm-btn-main,.hm-btn-main *{color:#fff!important}
 .org-stat small{color:var(--muted)}
+:root,:root:not([data-theme="light"]),:root[data-theme="dark"]{--btn:var(--blue)}
+
+/* login form: input shells follow the theme (style.css hard-codes white) */
+.lg-in{background:var(--card);border-color:var(--line-2)}
+.lg-in:focus-within{border-color:var(--blue);box-shadow:0 0 0 4px rgba(24,181,139,.18)}
+.lg-in input{background:transparent;color:var(--ink)}
+.lg-in>span{color:var(--muted)}
+.lg-field label{color:var(--ink-2)}
+.lg-in input{border:0!important;box-shadow:none!important;outline:0}
